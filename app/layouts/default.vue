@@ -1,21 +1,37 @@
 <!-- app/layouts/default.vue -->
 <script lang="ts" setup>
+import type { NavigationMenuItem } from '#ui/types';
+
 const open = ref(false);
 
 const { user, logout } = useAuth();
 
-const navItems = computed(() => {
-  const base = [
-    { label: 'Home', icon: 'i-lucide-house', to: '/', onSelect: () => (open.value = false) },
+const navItems = computed<NavigationMenuItem[]>(() => {
+  const base: NavigationMenuItem[] = [
+    {
+      label: 'Home',
+      icon: 'i-lucide-house',
+      to: '/',
+      onSelect: () => {
+        open.value = false;
+      },
+    },
   ];
-  if (user.value?.role === 'Admin') {
-    base.push({
-      label: 'Administration',
-      icon: 'i-lucide-shield',
-      to: '/admin',
-      onSelect: () => (open.value = false),
-    });
-  }
+
+  base.push({
+    label: 'Database',
+    icon: 'i-lucide-database',
+    children: [
+      {
+        label: 'Championships',
+        to: '/database/championships',
+        onSelect: () => {
+          open.value = false;
+        },
+      },
+    ],
+  });
+
   return base;
 });
 

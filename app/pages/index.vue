@@ -1,3 +1,10 @@
+<!-- app/pages/index.vue -->
+<script setup lang="ts">
+useHead({
+  title: 'Home',
+});
+</script>
+
 <template>
   <UDashboardPanel id="home">
     <template #header>

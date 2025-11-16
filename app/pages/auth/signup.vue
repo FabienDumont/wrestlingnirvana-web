@@ -3,6 +3,10 @@
 import * as z from 'zod';
 import type { FormSubmitEvent } from '@nuxt/ui';
 
+useHead({
+  title: 'Sign Up',
+});
+
 const schema = z.object({
   email: z.email('Invalid email'),
   username: z.string('Username is required').min(2, 'Must be at least 2 characters'),

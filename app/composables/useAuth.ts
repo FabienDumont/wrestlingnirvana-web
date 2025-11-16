@@ -32,8 +32,7 @@ export const useAuth = () => {
       user.value = loggedInUser;
       return { error: null };
     } catch (err: any) {
-      const message =
-        err?.data?.message || err?.statusMessage || 'An unknown error occurred while signing in.';
+      const message = err?.data?.message || err?.statusMessage;
 
       return { error: { message } };
     }
@@ -48,8 +47,7 @@ export const useAuth = () => {
 
       return { error: null };
     } catch (err: any) {
-      const message =
-        err?.data?.message || err?.statusMessage || 'An unknown error occurred while signing up.';
+      const message = err?.data?.message || err?.statusMessage;
 
       return { error: { message } };
     }

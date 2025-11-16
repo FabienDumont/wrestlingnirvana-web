@@ -2,7 +2,10 @@
 <script setup lang="ts">
 import * as z from 'zod';
 import type { FormSubmitEvent } from '@nuxt/ui';
-import { useAuth } from '~/composables/useAuth';
+
+useHead({
+  title: 'Sign In',
+});
 
 const schema = z.object({
   emailOrUsername: z.string('Email or username is required'),
