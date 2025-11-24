@@ -54,10 +54,12 @@ const handleDeleteChampionship = async (id: string) => {
       title: 'Championship deleted',
       color: 'success',
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to delete championship.';
+
     toast.add({
       title: 'Error',
-      description: err?.message || 'Failed to delete championship.',
+      description: message,
       color: 'error',
     });
   }
@@ -93,10 +95,12 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     // Refetch list and close modal
     await refresh();
     isModalOpen.value = false;
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to save championship.';
+
     toast.add({
       title: 'Error',
-      description: err?.message || 'Failed to save championship.',
+      description: message,
       color: 'error',
     });
   } finally {

@@ -10,15 +10,9 @@ type ChampionshipPayload = {
 
 export const useChampionships = () => {
   const getAll = async (): Promise<Championship[]> => {
-    try {
-      return await $fetch<Championship[]>('/api/championships', {
-        method: 'GET',
-      });
-    } catch (err: any) {
-      const message = err?.data?.message || err?.statusMessage;
-
-      throw new Error(message);
-    }
+    return await $fetch<Championship[]>('/api/championships', {
+      method: 'GET',
+    });
   };
 
   const create = async (payload: ChampionshipPayload): Promise<Championship> => {

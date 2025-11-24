@@ -1,6 +1,7 @@
 // server/api/championships/[id].delete.ts
+import { wrapFetch } from '../../utils/wrapFetch';
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<void> => {
   const config = useRuntimeConfig();
   const accessToken = getCookie(event, 'access_token');
 
@@ -22,41 +23,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  try {
-    await $fetch(`/api/championships/${id}`, {
+  return await wrapFetch(event, () =>
+    $fetch(`/api/championships/${id}`, {
       baseURL: config.apiBaseUrl,
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
-    });
-  } catch (err: any) {
-    const statusCode = err?.response?.status || err?.statusCode || 500;
-    const data = err?.response?._data ?? err?.data;
-
-    let message: string | undefined;
-
-    if (typeof data === 'string') {
-      message = data;
-    } else if (data && typeof data === 'object') {
-      message = data.detail || data.title || data.message;
-    }
-
-    if (statusCode === 401) {
-      deleteCookie(event, 'access_token');
-      deleteCookie(event, 'refresh_token');
-
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
-        data: { message: message || 'Unauthorized' },
-      });
-    }
-
-    throw createError({
-      statusCode,
-      statusMessage: message || 'Failed to delete championship',
-      data: { message: message || 'Failed to delete championship' },
-    });
-  }
+    }),
+  );
 });

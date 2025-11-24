@@ -1,67 +1,60 @@
 // server/api/auth/login.post.ts
-export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig();
-  const body = await readBody<{ emailOrUsername: string; password: string }>(event);
+import type { H3Event } from 'h3';
+import { wrapFetch } from '../../utils/wrapFetch';
 
-  const payload = {
+type AuthResult = {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  username: string;
+  role: string;
+};
+
+type LoginBody = {
+  emailOrUsername: string;
+  password: string;
+};
+
+type LoginResponse = {
+  user: {
+    username: string;
+    role: string;
+  };
+};
+
+export default defineEventHandler(async (event: H3Event): Promise<LoginResponse> => {
+  const config = useRuntimeConfig();
+  const body = await readBody<LoginBody>(event);
+
+  const payload: LoginBody = {
     emailOrUsername: body.emailOrUsername,
     password: body.password,
   };
 
-  try {
-    const authResult = await $fetch<{
-      accessToken: string;
-      refreshToken: string;
-      expiresAt: string;
-      username: string;
-      role: string;
-    }>('/api/auth/login', {
+  const authResult = await wrapFetch<AuthResult>(event, () =>
+    $fetch<AuthResult>('/api/auth/login', {
       baseURL: config.apiBaseUrl,
       method: 'POST',
       body: payload,
-    });
+    }),
+  );
 
-    const isProduction = !import.meta.dev;
+  const isProduction = !import.meta.dev;
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax' as const,
-      path: '/',
-    };
+  const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax' as const,
+    path: '/',
+  };
 
-    setCookie(event, 'access_token', authResult.accessToken, cookieOptions);
-    setCookie(event, 'refresh_token', authResult.refreshToken, cookieOptions);
+  setCookie(event, 'access_token', authResult.accessToken, cookieOptions);
+  setCookie(event, 'refresh_token', authResult.refreshToken, cookieOptions);
 
-    return {
-      user: {
-        username: authResult.username,
-        role: authResult.role,
-      },
-    };
-  } catch (err: any) {
-    const statusCode = err?.statusCode || err?.response?.status || 500;
-    const rawData = err?.data ?? err?.response?._data;
-
-    let message: string | undefined;
-
-    if (typeof rawData === 'string') {
-      // e.g. "Invalid credentials."
-      message = rawData;
-    } else if (rawData && typeof rawData === 'object') {
-      // e.g. { message: "Invalid credentials." } or ProblemDetails-like
-      message = rawData.message || rawData.detail || rawData.title;
-    }
-
-    if (!message) {
-      message = 'Failed to sign in';
-    }
-
-    // Expose it both as statusMessage and data.message so client can read it
-    throw createError({
-      statusCode,
-      statusMessage: message,
-      data: { message },
-    });
-  }
+  return {
+    user: {
+      username: authResult.username,
+      role: authResult.role,
+    },
+  };
 });
