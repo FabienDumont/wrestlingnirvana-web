@@ -11,7 +11,7 @@ type ChampionshipPayload = {
 export const useChampionships = () => {
   const getAll = async (): Promise<Championship[]> => {
     try {
-      return await $fetch('/api/championships', {
+      return await $fetch<Championship[]>('/api/championships', {
         method: 'GET',
       });
     } catch (err: any) {
@@ -29,12 +29,22 @@ export const useChampionships = () => {
   };
 
   const update = async (id: string, payload: ChampionshipPayload): Promise<Championship> => {
-    throw new Error('Not implemented');
+    return await $fetch<Championship>(`/api/championships/${id}`, {
+      method: 'PUT',
+      body: payload,
+    });
+  };
+
+  const deleteChampionship = async (id: string) => {
+    await $fetch(`/api/championships/${id}`, {
+      method: 'DELETE',
+    });
   };
 
   return {
     getAll,
     create,
     update,
+    deleteChampionship,
   };
 };

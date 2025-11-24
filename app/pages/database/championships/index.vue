@@ -12,7 +12,7 @@ const { user } = useAuth();
 
 const toast = useToast();
 
-const { getAll, create, update } = useChampionships();
+const { getAll, create, update, deleteChampionship } = useChampionships();
 
 const {
   data: championships,
@@ -44,6 +44,23 @@ const openEditModal = (championship: { id: string; name: string }) => {
   editingId.value = championship.id;
   formState.name = championship.name;
   isModalOpen.value = true;
+};
+
+const handleDeleteChampionship = async (id: string) => {
+  try {
+    await deleteChampionship(id);
+    await refresh();
+    toast.add({
+      title: 'Championship deleted',
+      color: 'success',
+    });
+  } catch (err: any) {
+    toast.add({
+      title: 'Error',
+      description: err?.message || 'Failed to delete championship.',
+      color: 'error',
+    });
+  }
 };
 
 const loading = ref(false);
@@ -153,6 +170,14 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
                   variant="ghost"
                   aria-label="Edit championship"
                   @click="openEditModal(championship)"
+                />
+                <UButton
+                  v-if="user?.role === 'Admin'"
+                  icon="i-lucide-trash"
+                  size="xs"
+                  variant="ghost"
+                  aria-label="Delete championship"
+                  @click="handleDeleteChampionship(championship.id)"
                 />
               </div>
             </template>
