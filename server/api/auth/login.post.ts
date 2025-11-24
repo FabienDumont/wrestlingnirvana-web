@@ -6,6 +6,7 @@ type AuthResult = {
   accessToken: string;
   refreshToken: string;
   expiresAt: string;
+  email: string;
   username: string;
   role: string;
 };
@@ -17,6 +18,7 @@ type LoginBody = {
 
 type LoginResponse = {
   user: {
+    email: string;
     username: string;
     role: string;
   };
@@ -53,6 +55,7 @@ export default defineEventHandler(async (event: H3Event): Promise<LoginResponse>
 
   return {
     user: {
+      email: authResult.email,
       username: authResult.username,
       role: authResult.role,
     },

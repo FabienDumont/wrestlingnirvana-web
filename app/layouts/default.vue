@@ -49,6 +49,10 @@ const handleLogout = async () => {
   await logout();
   await navigateTo('/');
 };
+
+const goToAccount = () => {
+  navigateTo('/auth/account');
+};
 </script>
 
 <template>
@@ -90,14 +94,19 @@ const handleLogout = async () => {
                 collapsed ? 'flex-col' : 'flex-row justify-between w-full',
               ]"
             >
-              <div
-                :class="['flex items-center gap-2', collapsed ? 'justify-center' : 'justify-start']"
+              <button
+                type="button"
+                :class="[
+                  'flex items-center gap-2 rounded-md px-2 py-1 transition hover:bg-muted/60',
+                  collapsed ? 'justify-center' : 'justify-start',
+                ]"
+                @click="goToAccount"
               >
                 <UAvatar size="xs" icon="i-lucide-user" />
                 <span v-if="!collapsed" class="text-sm font-medium truncate">
                   {{ user?.username }}
                 </span>
-              </div>
+              </button>
 
               <UButton
                 icon="i-lucide-log-out"

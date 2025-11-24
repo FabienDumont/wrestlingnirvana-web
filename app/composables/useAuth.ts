@@ -1,5 +1,6 @@
 // composables/useAuth.ts
 type User = {
+  email: string;
   username: string;
   role: string;
 };
@@ -23,39 +24,27 @@ export const useAuth = () => {
   const user = useState<User | null>('auth-user', () => null);
 
   const signIn = async (payload: SignInPayload): Promise<AuthResult> => {
-    try {
-      const { user: loggedInUser } = await $fetch<{ user: User }>('/api/auth/login', {
-        method: 'POST',
-        body: payload,
-      });
+    const { user: loggedInUser } = await $fetch<{ user: User }>('/api/auth/login', {
+      method: 'POST',
+      body: payload,
+    });
 
-      user.value = loggedInUser;
-      return { error: null };
-    } catch (err: any) {
-      const message = err?.data?.message || err?.statusMessage;
-
-      return { error: { message } };
-    }
+    user.value = loggedInUser;
+    return { error: null };
   };
 
   const signUp = async (payload: SignUpPayload): Promise<AuthResult> => {
-    try {
-      await $fetch<{ user: User }>('/api/auth/register', {
-        method: 'POST',
-        body: payload,
-      });
+    await $fetch<{ user: User }>('/api/auth/register', {
+      method: 'POST',
+      body: payload,
+    });
 
-      return { error: null };
-    } catch (err: any) {
-      const message = err?.data?.message || err?.statusMessage;
-
-      return { error: { message } };
-    }
+    return { error: null };
   };
 
-  const fetchMe = async (): Promise<void> => {
-    // If we already have a user (SSR hydration / client nav), do nothing
-    if (user.value !== null) {
+  const fetchMe = async (options?: { force?: boolean }): Promise<void> => {
+    // If we already have a user (SSR hydration / client nav), do nothing unless forced
+    if (!options?.force && user.value !== null) {
       return;
     }
 
@@ -78,7 +67,7 @@ export const useAuth = () => {
       });
 
       user.value = currentUser;
-    } catch (err: any) {
+    } catch {
       // 401 etc: treat as not logged in
       user.value = null;
     }

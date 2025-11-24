@@ -11,6 +11,7 @@ type RegisterResponse = {
   accessToken: string;
   refreshToken: string;
   expiresAt: string;
+  email: string;
   username: string;
   role: string;
 };

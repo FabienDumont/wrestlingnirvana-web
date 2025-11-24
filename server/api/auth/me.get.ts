@@ -3,12 +3,14 @@ import type { H3Event } from 'h3';
 import { wrapFetch } from '../../utils/wrapFetch';
 
 type MeUpstream = {
+  email: string;
   username: string;
   role: string;
 };
 
 type MeResponse = {
   user: {
+    email: string;
     username: string;
     role: string;
   };
@@ -40,6 +42,7 @@ export default defineEventHandler(async (event: H3Event): Promise<MeResponse> =>
 
   return {
     user: {
+      email: me.email,
       username: me.username,
       role: me.role,
     },
