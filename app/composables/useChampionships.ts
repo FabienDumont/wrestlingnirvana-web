@@ -1,14 +1,19 @@
 // composables/useChampionships.ts
-export type Championship = {
-  id: string;
-  name: string;
-};
+import type { ChampionshipResponse } from '#shared/types/championships';
+
+export type Championship = ChampionshipResponse;
 
 type ChampionshipPayload = {
   name: string;
 };
 
 export const useChampionships = () => {
+  const getById = async (id: string): Promise<Championship> => {
+    return await $fetch<Championship>(`/api/championships/${id}`, {
+      method: 'GET',
+    });
+  };
+
   const getAll = async (): Promise<Championship[]> => {
     return await $fetch<Championship[]>('/api/championships', {
       method: 'GET',
@@ -36,6 +41,7 @@ export const useChampionships = () => {
   };
 
   return {
+    getById,
     getAll,
     create,
     update,

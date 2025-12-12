@@ -1,36 +1,34 @@
-// server/utils/wrapFetch.ts
 import type { H3Event } from 'h3';
 import type { FetchError } from 'ofetch';
+import type { ProblemDetails } from '#shared/types/error';
 
 export async function wrapFetch<T>(event: H3Event, request: () => Promise<T>): Promise<T> {
   try {
     return await request();
   } catch (err: unknown) {
-    const e = err as
-      | FetchError<unknown>
-      | {
-          statusCode?: number;
-          response?: { status?: number; _data?: unknown };
-          data?: unknown;
-          status?: number;
-        };
+    const fetchError = err as FetchError<ProblemDetails>;
 
-    const statusCode = e.response?.status ?? e.statusCode ?? e.status ?? 500;
+    const statusCode = fetchError.response?.status ?? fetchError.statusCode ?? 500;
 
     if (statusCode >= 500) {
-      console.error('API error:', err);
+      console.error('API Server Error:', fetchError);
     } else if (import.meta.dev) {
-      console.warn('Handled API error:', statusCode);
+      console.warn('API Client Error:', statusCode, fetchError.message);
     }
 
-    const data = e.response?._data ?? e.data;
+    const payload = fetchError.response?._data;
+    let message = 'An unexpected error occurred';
 
-    let message: string | undefined;
-    if (typeof data === 'string') {
-      message = data;
-    } else if (data && typeof data === 'object') {
-      const obj = data as { detail?: string; title?: string; message?: string };
-      message = obj.detail ?? obj.title ?? obj.message;
+    if (payload && typeof payload === 'object') {
+      if (payload.errors && Object.keys(payload.errors).length > 0) {
+        message = Object.entries(payload.errors)
+          .map(([key, msgs]) => `${key}: ${msgs.join(', ')}`)
+          .join('\n');
+      } else {
+        message = payload.detail ?? payload.title ?? message;
+      }
+    } else if (typeof payload === 'string') {
+      message = payload;
     }
 
     if (statusCode === 401) {
@@ -46,8 +44,8 @@ export async function wrapFetch<T>(event: H3Event, request: () => Promise<T>): P
 
     throw createError({
       statusCode,
-      statusMessage: message || 'Request failed',
-      data: { message: message || 'Request failed' },
+      statusMessage: message,
+      data: { message },
     });
   }
 }

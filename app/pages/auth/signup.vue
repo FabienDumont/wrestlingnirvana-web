@@ -7,6 +7,8 @@ useHead({
   title: 'Sign Up',
 });
 
+const { $exception } = useNuxtApp();
+
 const schema = z.object({
   email: z.email('Invalid email'),
   username: z.string('Username is required').min(2, 'Must be at least 2 characters'),
@@ -29,31 +31,28 @@ const { signUp } = useAuth();
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
-  const { email, username, password } = event.data;
+  try {
+    const { email, username, password } = event.data;
 
-  const { error } = await signUp({
-    email,
-    username,
-    password,
-  });
-
-  if (error) {
-    toast.add({
-      title: 'Error',
-      description: error.message,
-      color: 'error',
+    await signUp({
+      email,
+      username,
+      password,
     });
-    return;
+
+    toast.add({
+      title: 'Success',
+      description: 'Successfully signed up!',
+      color: 'success',
+    });
+
+    await navigateTo('/');
+    await navigateTo('/auth/signin');
+  } catch (error) {
+    $exception.raise('Sign in failed', error);
+  } finally {
+    loading.value = false;
   }
-
-  toast.add({
-    title: 'Success',
-    description: 'Successfully signed up!',
-    color: 'success',
-  });
-
-  await navigateTo('/');
-  await navigateTo('/auth/signin');
 }
 </script>
 

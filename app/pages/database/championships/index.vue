@@ -8,6 +8,8 @@ useHead({
   title: 'Championships',
 });
 
+const { $exception } = useNuxtApp();
+
 const { user } = useAuth();
 
 const toast = useToast();
@@ -54,14 +56,8 @@ const handleDeleteChampionship = async (id: string) => {
       title: 'Championship deleted',
       color: 'success',
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to delete championship.';
-
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error',
-    });
+  } catch (error) {
+    $exception.raise('Championship deletion failed', error);
   }
 };
 
@@ -95,14 +91,8 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     // Refetch list and close modal
     await refresh();
     isModalOpen.value = false;
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to save championship.';
-
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error',
-    });
+  } catch (error) {
+    $exception.raise('Championship save failed', error);
   } finally {
     loading.value = false;
   }
@@ -162,27 +152,32 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
             <template #body>
               <div class="flex items-center justify-between gap-3">
                 <div class="flex flex-col">
-                  <span class="font-medium">
+                  <NuxtLink
+                    :to="`/database/championships/${championship.id}`"
+                    class="font-medium hover:underline"
+                  >
                     {{ championship.name }}
-                  </span>
+                  </NuxtLink>
                 </div>
 
-                <UButton
-                  v-if="user?.role === 'Admin'"
-                  icon="i-lucide-pencil"
-                  size="xs"
-                  variant="ghost"
-                  aria-label="Edit championship"
-                  @click="openEditModal(championship)"
-                />
-                <UButton
-                  v-if="user?.role === 'Admin'"
-                  icon="i-lucide-trash"
-                  size="xs"
-                  variant="ghost"
-                  aria-label="Delete championship"
-                  @click="handleDeleteChampionship(championship.id)"
-                />
+                <div class="flex items-center gap-1">
+                  <UButton
+                    v-if="user?.role === 'Admin'"
+                    icon="i-lucide-pencil"
+                    size="xs"
+                    variant="ghost"
+                    aria-label="Edit championship"
+                    @click="openEditModal(championship)"
+                  />
+                  <UButton
+                    v-if="user?.role === 'Admin'"
+                    icon="i-lucide-trash"
+                    size="xs"
+                    variant="ghost"
+                    aria-label="Delete championship"
+                    @click="handleDeleteChampionship(championship.id)"
+                  />
+                </div>
               </div>
             </template>
           </UPageCard>
