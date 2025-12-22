@@ -192,7 +192,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
         <template #body>
           <UForm :state="formState" :schema="schema" class="space-y-4" @submit="onSubmit">
             <UFormField name="name" label="Name">
-              <UInput v-model="formState.name" />
+              <UInput v-model="formState.name" class="w-full" placeholder="Championship name" />
             </UFormField>
 
             <div class="flex justify-end gap-2">

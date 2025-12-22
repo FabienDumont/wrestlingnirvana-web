@@ -3,14 +3,16 @@ import type { PromotionResponse } from '#shared/types/promotions';
 export type Promotion = PromotionResponse;
 
 export const usePromotions = () => {
+  const apiFetch = useApiFetch();
+
   const getById = async (id: string): Promise<Promotion> => {
-    return await $fetch<Promotion>(`/api/promotions/${id}`, {
+    return await apiFetch<Promotion>(`/api/promotions/${id}`, {
       method: 'GET',
     });
   };
 
   const getAll = async (): Promise<Promotion[]> => {
-    return await $fetch<Promotion[]>('/api/promotions', {
+    return await apiFetch<Promotion[]>('/api/promotions', {
       method: 'GET',
     });
   };

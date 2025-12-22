@@ -8,34 +8,36 @@ type ChampionshipPayload = {
 };
 
 export const useChampionships = () => {
+  const apiFetch = useApiFetch();
+
   const getById = async (id: string): Promise<Championship> => {
-    return await $fetch<Championship>(`/api/championships/${id}`, {
+    return await apiFetch<Championship>(`/api/championships/${id}`, {
       method: 'GET',
     });
   };
 
   const getAll = async (): Promise<Championship[]> => {
-    return await $fetch<Championship[]>('/api/championships', {
+    return await apiFetch<Championship[]>('/api/championships', {
       method: 'GET',
     });
   };
 
   const create = async (payload: ChampionshipPayload): Promise<Championship> => {
-    return await $fetch<Championship>('/api/championships', {
+    return await apiFetch<Championship>('/api/championships', {
       method: 'POST',
       body: payload,
     });
   };
 
   const update = async (id: string, payload: ChampionshipPayload): Promise<Championship> => {
-    return await $fetch<Championship>(`/api/championships/${id}`, {
+    return await apiFetch<Championship>(`/api/championships/${id}`, {
       method: 'PUT',
       body: payload,
     });
   };
 
   const deleteChampionship = async (id: string) => {
-    await $fetch(`/api/championships/${id}`, {
+    await apiFetch(`/api/championships/${id}`, {
       method: 'DELETE',
     });
   };

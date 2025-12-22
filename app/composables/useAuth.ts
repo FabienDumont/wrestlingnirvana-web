@@ -21,10 +21,11 @@ type AuthResult = {
 };
 
 export const useAuth = () => {
+  const apiFetch = useApiFetch();
   const user = useState<User | null>('auth-user', () => null);
 
   const signIn = async (payload: SignInPayload): Promise<AuthResult> => {
-    const { user: loggedInUser } = await $fetch<{ user: User }>('/api/auth/login', {
+    const { user: loggedInUser } = await apiFetch<{ user: User }>('/api/auth/login', {
       method: 'POST',
       body: payload,
     });
@@ -34,7 +35,7 @@ export const useAuth = () => {
   };
 
   const signUp = async (payload: SignUpPayload): Promise<AuthResult> => {
-    await $fetch<{ user: User }>('/api/auth/register', {
+    await apiFetch<{ user: User }>('/api/auth/register', {
       method: 'POST',
       body: payload,
     });
@@ -43,7 +44,6 @@ export const useAuth = () => {
   };
 
   const fetchMe = async (options?: { force?: boolean }): Promise<void> => {
-    // If we already have a user (SSR hydration / client nav), do nothing unless forced
     if (!options?.force && user.value !== null) {
       return;
     }
@@ -61,7 +61,7 @@ export const useAuth = () => {
     }
 
     try {
-      const { user: currentUser } = await $fetch<{ user: User }>('/api/auth/me', {
+      const { user: currentUser } = await apiFetch<{ user: User }>('/api/auth/me', {
         method: 'GET',
         headers,
       });
@@ -75,7 +75,7 @@ export const useAuth = () => {
 
   const logout = async (): Promise<void> => {
     try {
-      await $fetch('/api/auth/logout', {
+      await apiFetch('/api/auth/logout', {
         method: 'POST',
       });
     } finally {

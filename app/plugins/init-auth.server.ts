@@ -1,6 +1,8 @@
 // app/plugins/init-auth.server.ts
 export default defineNuxtPlugin(async () => {
-  const { fetchMe } = useAuth();
+  const { user, fetchMe } = useAuth();
 
-  await fetchMe();
+  if (user.value !== null) {
+    await fetchMe();
+  }
 });
