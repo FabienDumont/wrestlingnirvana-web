@@ -23,6 +23,13 @@ const navItems = computed<NavigationMenuItem[]>(() => {
     icon: 'i-lucide-database',
     children: [
       {
+        label: 'Promotions',
+        to: '/database/promotions',
+        onSelect: () => {
+          open.value = false;
+        },
+      },
+      {
         label: 'Championships',
         to: '/database/championships',
         onSelect: () => {

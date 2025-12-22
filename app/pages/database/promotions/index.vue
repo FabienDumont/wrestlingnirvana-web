@@ -1,11 +1,11 @@
-<!-- app/pages/database/championships/index.vue -->
+<!-- app/pages/database/promotions/index.vue -->
 <script setup lang="ts">
 import * as z from 'zod';
 import type { FormSubmitEvent } from '@nuxt/ui';
-import { useChampionships } from '~/composables/useChampionships';
+import { usePromotions } from '~/composables/usePromotions';
 
 useHead({
-  title: 'Championships',
+  title: 'Promotions',
 });
 
 const { $exception } = useNuxtApp();
@@ -14,14 +14,14 @@ const { user } = useAuth();
 
 const toast = useToast();
 
-const { getAll, create, update, deleteChampionship } = useChampionships();
+const { getAll, create, update, deletePromotion } = usePromotions();
 
 const {
-  data: championships,
+  data: promotions,
   status,
   error,
   refresh,
-} = await useAsyncData('championships', () => getAll());
+} = await useAsyncData('promotions', () => getAll());
 
 const isModalOpen = ref(false);
 const editingId = ref<string | null>(null);
@@ -42,22 +42,22 @@ const openCreateModal = () => {
   isModalOpen.value = true;
 };
 
-const openEditModal = (championship: { id: string; name: string }) => {
-  editingId.value = championship.id;
-  formState.name = championship.name;
+const openEditModal = (promotion: { id: string; name: string }) => {
+  editingId.value = promotion.id;
+  formState.name = promotion.name;
   isModalOpen.value = true;
 };
 
-const handleDeleteChampionship = async (id: string) => {
+const handleDeletePromotion = async (id: string) => {
   try {
-    await deleteChampionship(id);
+    await deletePromotion(id);
     await refresh();
     toast.add({
-      title: 'Championship deleted',
+      title: 'Promotion deleted',
       color: 'success',
     });
   } catch (error) {
-    $exception.raise('Championship deletion failed', error);
+    $exception.raise('Promotion deletion failed', error);
   }
 };
 
@@ -76,14 +76,14 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
       await create(payload);
       await refresh();
       toast.add({
-        title: 'Championship created',
+        title: 'Promotion created',
         color: 'success',
       });
     } else {
       // update
       await update(editingId.value, payload);
       toast.add({
-        title: 'Championship updated',
+        title: 'Promotion updated',
         color: 'success',
       });
     }
@@ -91,7 +91,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     await refresh();
     isModalOpen.value = false;
   } catch (error) {
-    $exception.raise('Championship save failed', error);
+    $exception.raise('Promotion save failed', error);
   } finally {
     loading.value = false;
   }
@@ -99,9 +99,9 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 </script>
 
 <template>
-  <UDashboardPanel id="championships">
+  <UDashboardPanel id="promotions">
     <template #header>
-      <UDashboardNavbar title="Championships" :ui="{ right: 'gap-3' }">
+      <UDashboardNavbar title="Promotions" :ui="{ right: 'gap-3' }">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -113,14 +113,14 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
             size="sm"
             @click="openCreateModal"
           >
-            New championship
+            New promotion
           </UButton>
         </template>
       </UDashboardNavbar>
     </template>
     <template #body>
       <div class="p-4 space-y-4">
-        <h1 class="text-xl font-semibold">Championships</h1>
+        <h1 class="text-xl font-semibold">Promotions</h1>
 
         <!-- Loading state -->
         <div v-if="status === 'pending'" class="space-y-2">
@@ -133,29 +133,29 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
         <UAlert
           v-else-if="status === 'error'"
           color="error"
-          title="Failed to load championships"
+          title="Failed to load promotions"
           :description="error?.message || 'Please try again later.'"
         />
 
         <!-- Empty state -->
         <UAlert
-          v-else-if="!Array.isArray(championships) || championships.length === 0"
+          v-else-if="!Array.isArray(promotions) || promotions.length === 0"
           color="neutral"
-          title="No championships yet"
-          description="No championship have been created yet."
+          title="No promotions yet"
+          description="No promotion have been created yet."
         />
 
         <!-- List -->
         <UPageList v-else divide>
-          <UPageCard v-for="championship in championships" :key="championship.id" variant="ghost">
+          <UPageCard v-for="promotion in promotions" :key="promotion.id" variant="ghost">
             <template #body>
               <div class="flex items-center justify-between gap-3">
                 <div class="flex flex-col">
                   <NuxtLink
-                    :to="`/database/championships/${championship.id}`"
+                    :to="`/database/promotions/${promotion.id}`"
                     class="font-medium hover:underline"
                   >
-                    {{ championship.name }}
+                    {{ promotion.name }}
                   </NuxtLink>
                 </div>
 
@@ -165,16 +165,16 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
                     icon="i-lucide-pencil"
                     size="xs"
                     variant="ghost"
-                    aria-label="Edit championship"
-                    @click="openEditModal(championship)"
+                    aria-label="Edit promotion"
+                    @click="openEditModal(promotion)"
                   />
                   <UButton
                     v-if="user?.role === 'Admin'"
                     icon="i-lucide-trash"
                     size="xs"
                     variant="ghost"
-                    aria-label="Delete championship"
-                    @click="handleDeleteChampionship(championship.id)"
+                    aria-label="Delete promotion"
+                    @click="handleDeletePromotion(promotion.id)"
                   />
                 </div>
               </div>
@@ -186,12 +186,12 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
       <UModal
         v-model:open="isModalOpen"
         :dismissible="false"
-        :title="editingId === null ? 'New championship' : 'Edit championship'"
+        :title="editingId === null ? 'New promotion' : 'Edit promotion'"
       >
         <template #body>
           <UForm :state="formState" :schema="schema" class="space-y-4" @submit="onSubmit">
             <UFormField name="name" label="Name">
-              <UInput v-model="formState.name" class="w-full" placeholder="Championship name" />
+              <UInput v-model="formState.name" class="w-full" placeholder="Promotion name" />
             </UFormField>
 
             <div class="flex justify-end gap-2">
