@@ -29,16 +29,6 @@ const promotionOptions = computed<PromotionOption[]>(() =>
   (promotions.value ?? []).map((p) => ({ label: p.name, value: p.id })),
 );
 
-const promotionNameById = computed(() => {
-  const map = new Map<string, string>();
-  for (const p of promotions.value ?? []) map.set(p.id, p.name);
-  return map;
-});
-
-const getCurrentPromotionId = (c: ChampionshipResponse) =>
-  c.ownershipHistory?.find((h) => h.toDate === null)?.promotionId ?? null;
-
-// Upsert modal state
 const isUpsertOpen = ref(false);
 const editing = ref<{ id: string | null; name: string }>({ id: null, name: '' });
 const upsertLoading = ref(false);
@@ -151,11 +141,6 @@ const openAssignModal = async (championshipId: string) => {
                   >
                     {{ c.name }}
                   </NuxtLink>
-
-                  <span v-if="getCurrentPromotionId(c)" class="text-sm text-gray-500">
-                    Current:
-                    {{ promotionNameById.get(getCurrentPromotionId(c)!) ?? 'Unknown promotion' }}
-                  </span>
                 </div>
 
                 <div class="flex items-center gap-1">
