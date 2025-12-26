@@ -4,12 +4,6 @@ import { useChampionships } from '~/composables/useChampionships';
 import { usePromotions } from '~/composables/usePromotions';
 import type { TableColumn } from '@nuxt/ui';
 
-type OwnershipHistory = {
-  promotionId: string;
-  fromDate?: string | null;
-  toDate?: string | null;
-};
-
 type OwnershipHistoryRow = {
   promotionName: string;
   fromDate: string;
@@ -29,15 +23,12 @@ useHead({
 });
 
 const { data, status, error } = useLazyAsyncData(
-  'championship-view-${id.value}',
+  () => `championship-view-${id.value}`,
   async () => {
     const [championship, promotions] = await Promise.all([getById(id.value), getAllPromotions()]);
-
     return { championship, promotions };
   },
-  {
-    watch: [id],
-  },
+  { watch: [id] },
 );
 
 const championship = computed(() => data.value?.championship);
@@ -54,19 +45,10 @@ const promotionNameById = computed<Record<string, string>>(() => {
   );
 });
 
-const columns: TableColumn<OwnershipHistory>[] = [
-  {
-    accessorKey: 'promotionName',
-    header: 'Promotion',
-  },
-  {
-    accessorKey: 'fromDate',
-    header: 'From',
-  },
-  {
-    accessorKey: 'toDate',
-    header: 'To',
-  },
+const columns: TableColumn<OwnershipHistoryRow>[] = [
+  { accessorKey: 'promotionName', header: 'Promotion' },
+  { accessorKey: 'fromDate', header: 'From' },
+  { accessorKey: 'toDate', header: 'To' },
 ];
 
 const ownershipHistoryRows = computed<OwnershipHistoryRow[]>(() => {

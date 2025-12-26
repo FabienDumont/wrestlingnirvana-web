@@ -1,20 +1,20 @@
 <!-- app/pages/database/championships/index.vue -->
 <script setup lang="ts">
-import * as z from 'zod';
-import type { FormSubmitEvent } from '@nuxt/ui';
+import type { ChampionshipResponse } from '#shared/types/championships';
 import { useChampionships } from '~/composables/useChampionships';
+import { usePromotions } from '~/composables/usePromotions';
+import ChampionshipUpsertModal from '~/components/championships/ChampionshipUpsertModal.vue';
+import ChampionshipOwnershipHistoryModal from '~/components/championships/ChampionshipOwnershipHistoryModal.vue';
 
-useHead({
-  title: 'Championships',
-});
+useHead({ title: 'Championships' });
 
 const { $exception } = useNuxtApp();
-
 const { user } = useAuth();
-
 const toast = useToast();
 
-const { getAll, create, update, deleteChampionship } = useChampionships();
+const { getAll, getById, create, update, deleteChampionship, setOwnershipHistory } =
+  useChampionships();
+const { getAll: getAllPromotions } = usePromotions();
 
 const {
   data: championships,
@@ -22,78 +22,75 @@ const {
   error,
   refresh,
 } = await useAsyncData('championships', () => getAll());
+const { data: promotions } = await useAsyncData('promotions', () => getAllPromotions());
 
-const isModalOpen = ref(false);
-const editingId = ref<string | null>(null);
+type PromotionOption = { label: string; value: string };
+const promotionOptions = computed<PromotionOption[]>(() =>
+  (promotions.value ?? []).map((p) => ({ label: p.name, value: p.id })),
+);
 
-const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
+const promotionNameById = computed(() => {
+  const map = new Map<string, string>();
+  for (const p of promotions.value ?? []) map.set(p.id, p.name);
+  return map;
 });
 
-type Schema = z.output<typeof schema>;
+const getCurrentPromotionId = (c: ChampionshipResponse) =>
+  c.ownershipHistory?.find((h) => h.toDate === null)?.promotionId ?? null;
 
-const formState = reactive<Partial<Schema>>({
-  name: undefined,
-});
+// Upsert modal state
+const isUpsertOpen = ref(false);
+const editing = ref<{ id: string | null; name: string }>({ id: null, name: '' });
+const upsertLoading = ref(false);
 
 const openCreateModal = () => {
-  editingId.value = null;
-  formState.name = '';
-  isModalOpen.value = true;
+  editing.value = { id: null, name: '' };
+  isUpsertOpen.value = true;
 };
-
 const openEditModal = (championship: { id: string; name: string }) => {
-  editingId.value = championship.id;
-  formState.name = championship.name;
-  isModalOpen.value = true;
+  editing.value = { id: championship.id, name: championship.name };
+  isUpsertOpen.value = true;
 };
 
-const handleDeleteChampionship = async (id: string) => {
+const handleUpsert = async (payload: { name: string }) => {
+  upsertLoading.value = true;
   try {
-    await deleteChampionship(id);
+    if (!editing.value.id) {
+      await create(payload);
+      toast.add({ title: 'Championship created', color: 'success' });
+    } else {
+      await update(editing.value.id, payload);
+      toast.add({ title: 'Championship updated', color: 'success' });
+    }
     await refresh();
-    toast.add({
-      title: 'Championship deleted',
-      color: 'success',
-    });
-  } catch (error) {
-    $exception.raise('Championship deletion failed', error);
+    isUpsertOpen.value = false;
+  } catch (e) {
+    $exception.raise('Championship save failed', e);
+  } finally {
+    upsertLoading.value = false;
   }
 };
 
-const loading = ref(false);
-
-const onSubmit = async (event: FormSubmitEvent<Schema>) => {
-  loading.value = true;
-
+const handleDelete = async (id: string) => {
   try {
-    const payload = {
-      name: event.data.name,
-    };
-
-    if (editingId.value === null) {
-      // create
-      await create(payload);
-      await refresh();
-      toast.add({
-        title: 'Championship created',
-        color: 'success',
-      });
-    } else {
-      // update
-      await update(editingId.value, payload);
-      toast.add({
-        title: 'Championship updated',
-        color: 'success',
-      });
-    }
-
+    await deleteChampionship(id);
     await refresh();
-    isModalOpen.value = false;
-  } catch (error) {
-    $exception.raise('Championship save failed', error);
-  } finally {
-    loading.value = false;
+    toast.add({ title: 'Championship deleted', color: 'success' });
+  } catch (e) {
+    $exception.raise('Championship deletion failed', e);
+  }
+};
+
+const isHistoryOpen = ref(false);
+const savingHistory = ref(false);
+const selectedChampionship = ref<ChampionshipResponse | null>(null);
+
+const openAssignModal = async (championshipId: string) => {
+  try {
+    selectedChampionship.value = await getById(championshipId);
+    isHistoryOpen.value = true;
+  } catch (e) {
+    $exception.raise('Failed to load championship details', e);
   }
 };
 </script>
@@ -118,18 +115,17 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
         </template>
       </UDashboardNavbar>
     </template>
+
     <template #body>
       <div class="p-4 space-y-4">
         <h1 class="text-xl font-semibold">Championships</h1>
 
-        <!-- Loading state -->
         <div v-if="status === 'pending'" class="space-y-2">
           <USkeleton class="h-12 w-full" />
           <USkeleton class="h-12 w-full" />
           <USkeleton class="h-12 w-full" />
         </div>
 
-        <!-- Error state -->
         <UAlert
           v-else-if="status === 'error'"
           color="error"
@@ -137,7 +133,6 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
           :description="error?.message || 'Please try again later.'"
         />
 
-        <!-- Empty state -->
         <UAlert
           v-else-if="!Array.isArray(championships) || championships.length === 0"
           color="neutral"
@@ -145,28 +140,40 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
           description="No championship have been created yet."
         />
 
-        <!-- List -->
         <UPageList v-else divide>
-          <UPageCard v-for="championship in championships" :key="championship.id" variant="ghost">
+          <UPageCard v-for="c in championships" :key="c.id" variant="ghost">
             <template #body>
               <div class="flex items-center justify-between gap-3">
                 <div class="flex flex-col">
                   <NuxtLink
-                    :to="`/database/championships/${championship.id}`"
+                    :to="`/database/championships/${c.id}`"
                     class="font-medium hover:underline"
                   >
-                    {{ championship.name }}
+                    {{ c.name }}
                   </NuxtLink>
+
+                  <span v-if="getCurrentPromotionId(c)" class="text-sm text-gray-500">
+                    Current:
+                    {{ promotionNameById.get(getCurrentPromotionId(c)!) ?? 'Unknown promotion' }}
+                  </span>
                 </div>
 
                 <div class="flex items-center gap-1">
+                  <UButton
+                    v-if="user?.role === 'Admin'"
+                    icon="i-lucide-flag"
+                    size="xs"
+                    variant="ghost"
+                    aria-label="Assign promotion"
+                    @click="openAssignModal(c.id)"
+                  />
                   <UButton
                     v-if="user?.role === 'Admin'"
                     icon="i-lucide-pencil"
                     size="xs"
                     variant="ghost"
                     aria-label="Edit championship"
-                    @click="openEditModal(championship)"
+                    @click="openEditModal(c)"
                   />
                   <UButton
                     v-if="user?.role === 'Admin'"
@@ -174,7 +181,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
                     size="xs"
                     variant="ghost"
                     aria-label="Delete championship"
-                    @click="handleDeleteChampionship(championship.id)"
+                    @click="handleDelete(c.id)"
                   />
                 </div>
               </div>
@@ -183,28 +190,36 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
         </UPageList>
       </div>
 
-      <UModal
-        v-model:open="isModalOpen"
-        :dismissible="false"
-        :title="editingId === null ? 'New championship' : 'Edit championship'"
-      >
-        <template #body>
-          <UForm :state="formState" :schema="schema" class="space-y-4" @submit="onSubmit">
-            <UFormField name="name" label="Name">
-              <UInput v-model="formState.name" class="w-full" placeholder="Championship name" />
-            </UFormField>
+      <ChampionshipUpsertModal
+        v-model:open="isUpsertOpen"
+        :title="editing.id ? 'Edit championship' : 'New championship'"
+        :initial-name="editing.name"
+        :loading="upsertLoading"
+        @submit="handleUpsert"
+      />
 
-            <div class="flex justify-end gap-2">
-              <UButton variant="ghost" color="neutral" type="button" @click="isModalOpen = false">
-                Cancel
-              </UButton>
-              <UButton type="submit" :loading="loading">
-                {{ editingId === null ? 'Create' : 'Save' }}
-              </UButton>
-            </div>
-          </UForm>
-        </template>
-      </UModal>
+      <ChampionshipOwnershipHistoryModal
+        v-model:open="isHistoryOpen"
+        :loading="savingHistory"
+        :promotion-options="promotionOptions"
+        :championship="selectedChampionship"
+        @save="
+          async (payload) => {
+            if (!selectedChampionship) return;
+            savingHistory = true;
+            try {
+              await setOwnershipHistory(selectedChampionship.id, payload);
+              await refresh();
+              isHistoryOpen = false;
+              toast.add({ title: 'Ownership history saved', color: 'success' });
+            } catch (e) {
+              $exception.raise('Ownership history save failed', e);
+            } finally {
+              savingHistory = false;
+            }
+          }
+        "
+      />
     </template>
   </UDashboardPanel>
 </template>

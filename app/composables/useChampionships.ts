@@ -12,6 +12,16 @@ export type AssignPromotionPayload = {
   from: string;
 };
 
+export type OwnershipHistoryLinePayload = {
+  promotionId: string;
+  fromDate: string;
+  toDate: string | null;
+};
+
+export type SetOwnershipHistoryPayload = {
+  lines: OwnershipHistoryLinePayload[];
+};
+
 export const useChampionships = () => {
   const apiFetch = useApiFetch();
 
@@ -47,9 +57,12 @@ export const useChampionships = () => {
     });
   };
 
-  const assignPromotion = async (championshipId: string, payload: AssignPromotionPayload) => {
-    return await apiFetch(`/api/championships/${championshipId}/assign-promotion`, {
-      method: 'POST',
+  const setOwnershipHistory = async (
+    championshipId: string,
+    payload: SetOwnershipHistoryPayload,
+  ) => {
+    return await apiFetch(`/api/championships/${championshipId}/ownership-history`, {
+      method: 'PUT',
       body: payload,
     });
   };
@@ -60,6 +73,6 @@ export const useChampionships = () => {
     create,
     update,
     deleteChampionship,
-    assignPromotion,
+    setOwnershipHistory,
   };
 };
