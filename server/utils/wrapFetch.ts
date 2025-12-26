@@ -16,16 +16,18 @@ export async function wrapFetch<T>(event: H3Event, request: () => Promise<T>): P
       console.warn('API Client Error:', statusCode, fetchError.message);
     }
 
-    const payload = fetchError.response?._data;
+    const payload: unknown = fetchError.response?._data;
     let message = 'An unexpected error occurred';
 
     if (payload && typeof payload === 'object') {
-      if (payload.errors && Object.keys(payload.errors).length > 0) {
-        message = Object.entries(payload.errors)
+      const pd = payload as Partial<ProblemDetails> & { errors?: Record<string, string[]> };
+
+      if (pd.errors && Object.keys(pd.errors).length > 0) {
+        message = Object.entries(pd.errors)
           .map(([key, msgs]) => `${key}: ${msgs.join(', ')}`)
           .join('\n');
       } else {
-        message = payload.detail ?? payload.title ?? message;
+        message = pd.detail ?? pd.title ?? message;
       }
     } else if (typeof payload === 'string') {
       message = payload;

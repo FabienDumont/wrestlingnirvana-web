@@ -10,6 +10,12 @@ type OwnershipHistory = {
   toDate?: string | null;
 };
 
+type OwnershipHistoryRow = {
+  promotionName: string;
+  fromDate: string;
+  toDate: string;
+};
+
 const route = useRoute();
 const router = useRouter();
 
@@ -50,7 +56,7 @@ const promotionNameById = computed<Record<string, string>>(() => {
 
 const columns: TableColumn<OwnershipHistory>[] = [
   {
-    accessorKey: 'promotionId',
+    accessorKey: 'promotionName',
     header: 'Promotion',
   },
   {
@@ -62,6 +68,17 @@ const columns: TableColumn<OwnershipHistory>[] = [
     header: 'To',
   },
 ];
+
+const ownershipHistoryRows = computed<OwnershipHistoryRow[]>(() => {
+  const history = championship.value?.ownershipHistory ?? [];
+  const map = promotionNameById.value;
+
+  return history.map((oh) => ({
+    promotionName: map[oh.promotionId] ?? oh.promotionId,
+    fromDate: oh.fromDate ? new Date(oh.fromDate).toLocaleDateString() : 'Present',
+    toDate: oh.toDate ? new Date(oh.toDate).toLocaleDateString() : 'Present',
+  }));
+});
 </script>
 
 <template>
@@ -128,7 +145,7 @@ const columns: TableColumn<OwnershipHistory>[] = [
               <h2 class="text-lg font-semibold">Ownership history</h2>
             </div>
 
-            <div v-if="championship.ownershipHistory.length === 0">
+            <div v-if="ownershipHistoryRows.length === 0">
               <UAlert
                 color="neutral"
                 title="No ownership history"
@@ -136,29 +153,7 @@ const columns: TableColumn<OwnershipHistory>[] = [
               />
             </div>
 
-            <UTable v-else :data="championship.ownershipHistory" :columns="columns">
-              <template #promotionId-cell="{ row }">
-                <span class="font-medium">
-                  {{ promotionNameById[row.original.promotionId] || row.original.promotionId }}
-                </span>
-              </template>
-
-              <template #fromDate-cell="{ row }">
-                {{
-                  row.original.fromDate
-                    ? new Date(row.original.fromDate).toLocaleDateString()
-                    : 'Present'
-                }}
-              </template>
-
-              <template #toDate-cell="{ row }">
-                {{
-                  row.original.toDate
-                    ? new Date(row.original.toDate).toLocaleDateString()
-                    : 'Present'
-                }}
-              </template>
-            </UTable>
+            <UTable v-else :data="ownershipHistoryRows" :columns="columns"> </UTable>
           </section>
         </div>
       </div>

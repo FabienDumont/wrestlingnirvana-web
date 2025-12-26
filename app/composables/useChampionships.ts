@@ -7,6 +7,11 @@ type ChampionshipPayload = {
   name: string;
 };
 
+export type AssignPromotionPayload = {
+  promotionId: string;
+  from: string;
+};
+
 export const useChampionships = () => {
   const apiFetch = useApiFetch();
 
@@ -42,11 +47,19 @@ export const useChampionships = () => {
     });
   };
 
+  const assignPromotion = async (championshipId: string, payload: AssignPromotionPayload) => {
+    return await apiFetch(`/api/championships/${championshipId}/assign-promotion`, {
+      method: 'POST',
+      body: payload,
+    });
+  };
+
   return {
     getById,
     getAll,
     create,
     update,
     deleteChampionship,
+    assignPromotion,
   };
 };
